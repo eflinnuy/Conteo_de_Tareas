@@ -1,0 +1,640 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>S.I.G.S.M. — Segunda Entrega</title>
+<style>
+  :root{
+    --bg: #0e1b1f;
+    --panel: #142a2f;
+    --panel-2: #17323a;
+    --ink: #eaf4f2;
+    --ink-dim: #9fbdb9;
+    --line: #24444b;
+    --accent: #3fb8a6;
+    --accent-2: #f2b441;
+    --done: #4c6b62;
+    --danger: #e2735a;
+    --radius: 10px;
+  }
+  *{ box-sizing: border-box; }
+  html,body{ height:100%; }
+  body{
+    margin:0;
+    background:
+      radial-gradient(1100px 500px at 15% -10%, rgba(63,184,166,0.14), transparent 60%),
+      radial-gradient(900px 500px at 100% 0%, rgba(242,180,65,0.08), transparent 55%),
+      var(--bg);
+    color: var(--ink);
+    font-family: "Iowan Old Style", "Palatino Linotype", Georgia, serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  .mono{ font-family: "SFMono-Regular", Menlo, Consolas, monospace; letter-spacing: 0.02em; }
+
+  header{
+    padding: 38px 24px 22px;
+    max-width: 980px;
+    margin: 0 auto;
+    border-bottom: 1px solid var(--line);
+  }
+  .kicker{
+    text-transform: uppercase;
+    font-size: 11px;
+    letter-spacing: 0.18em;
+    color: var(--accent);
+    margin: 0 0 8px;
+  }
+  h1{
+    margin: 0 0 6px;
+    font-size: clamp(28px, 4vw, 40px);
+    font-weight: 600;
+    line-height: 1.1;
+  }
+  .sub{
+    color: var(--ink-dim);
+    font-size: 15px;
+    margin: 0;
+    max-width: 60ch;
+  }
+
+  .overall{
+    max-width: 980px;
+    margin: 22px auto 0;
+    padding: 0 24px;
+    display:flex;
+    align-items:center;
+    gap: 18px;
+    flex-wrap: wrap;
+  }
+  .ring{
+    position: relative;
+    width: 74px; height:74px; flex: 0 0 auto;
+  }
+  .ring svg{ transform: rotate(-90deg); width:100%; height:100%; }
+  .ring circle{ fill:none; stroke-width:6; }
+  .ring .track{ stroke: var(--line); }
+  .ring .fill{ stroke: var(--accent); stroke-linecap: round; transition: stroke-dashoffset .4s ease; }
+  .ring .num{
+    position:absolute; inset:0;
+    display:flex; align-items:center; justify-content:center;
+    font-size: 16px; font-weight:700;
+  }
+  .overall-text{ flex: 1; min-width: 220px; }
+  .overall-text .label{ color: var(--ink-dim); font-size: 13px; margin-bottom: 2px; }
+  .overall-text .count{ font-size: 15px; }
+  .reset-btn{
+    background: transparent;
+    border: 1px solid var(--line);
+    color: var(--ink-dim);
+    padding: 9px 14px;
+    border-radius: var(--radius);
+    font-size: 13px;
+    cursor: pointer;
+    font-family: inherit;
+    transition: border-color .15s, color .15s;
+  }
+  .reset-btn:hover{ border-color: var(--danger); color: var(--danger); }
+
+  main{
+    max-width: 980px;
+    margin: 28px auto 80px;
+    padding: 0 24px;
+    display: grid;
+    gap: 16px;
+  }
+
+  .subject{
+    background: linear-gradient(180deg, var(--panel), var(--panel-2));
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    overflow: hidden;
+  }
+  .subject-head{
+    display:flex;
+    align-items:center;
+    gap: 14px;
+    padding: 16px 18px;
+    cursor: pointer;
+    user-select: none;
+  }
+  .swatch{
+    width: 10px; height: 10px; border-radius: 50%;
+    flex: 0 0 auto;
+  }
+  .subject-title{
+    flex: 1;
+    min-width: 0;
+  }
+  .subject-title h2{
+    margin: 0;
+    font-size: 17px;
+    font-weight: 600;
+  }
+  .subject-title .meta{
+    color: var(--ink-dim);
+    font-size: 12.5px;
+    margin-top: 2px;
+    font-family: "SFMono-Regular", Menlo, Consolas, monospace;
+  }
+  .bar-wrap{
+    width: 100px;
+    height: 6px;
+    background: var(--line);
+    border-radius: 4px;
+    overflow: hidden;
+    flex: 0 0 auto;
+  }
+  .bar-fill{ height: 100%; background: var(--accent); width:0%; transition: width .3s ease; }
+  .chevron{
+    width: 18px; height: 18px; flex: 0 0 auto;
+    color: var(--ink-dim);
+    transition: transform .2s ease;
+  }
+  .subject.open .chevron{ transform: rotate(180deg); }
+
+  .subject-body{
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height .35s ease;
+    border-top: 1px solid transparent;
+  }
+  .subject.open .subject-body{ border-top-color: var(--line); }
+
+  .group{ padding: 6px 18px 4px; }
+  .group + .group{ border-top: 1px dashed var(--line); }
+  .group-title{
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--ink-dim);
+    margin: 14px 0 8px;
+  }
+  .note{
+    font-size: 13.5px;
+    color: var(--ink-dim);
+    background: rgba(0,0,0,0.15);
+    border-left: 2px solid var(--accent-2);
+    padding: 8px 12px;
+    border-radius: 0 6px 6px 0;
+    margin: 8px 0 14px;
+  }
+
+  .task{
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 9px 4px;
+    border-radius: 8px;
+    cursor: pointer;
+  }
+  .task:hover{ background: rgba(255,255,255,0.03); }
+
+  .task input[type="checkbox"]{
+    appearance: none;
+    -webkit-appearance: none;
+    width: 19px; height: 19px;
+    margin-top: 2px;
+    border: 1.5px solid var(--ink-dim);
+    border-radius: 5px;
+    flex: 0 0 auto;
+    cursor: pointer;
+    position: relative;
+    background: transparent;
+    transition: background .15s, border-color .15s;
+  }
+  .task input[type="checkbox"]:checked{
+    background: var(--accent);
+    border-color: var(--accent);
+  }
+  .task input[type="checkbox"]:checked::after{
+    content:"";
+    position:absolute;
+    left: 5px; top: 1.5px;
+    width: 5px; height: 9px;
+    border: solid #0e1b1f;
+    border-width: 0 2px 2px 0;
+    transform: rotate(45deg);
+  }
+  .task label{
+    font-size: 14.5px;
+    line-height: 1.45;
+    cursor: pointer;
+  }
+  .task.done label{
+    color: var(--ink-dim);
+    text-decoration: line-through;
+    text-decoration-color: var(--done);
+    text-decoration-thickness: 1.5px;
+  }
+  .task.optional label::after{
+    content: " · opcional";
+    font-size: 11px;
+    color: var(--accent-2);
+    text-decoration: none;
+    font-style: italic;
+  }
+
+  footer{
+    text-align:center;
+    color: var(--ink-dim);
+    font-size: 12px;
+    padding: 20px;
+    max-width: 980px;
+    margin: 0 auto;
+  }
+
+  @media (max-width: 560px){
+    .bar-wrap{ display:none; }
+    .subject-head{ gap: 10px; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <p class="kicker mono">S.I.G.S.M. · Sistema Informático de Gestión de Servicios Médicos</p>
+  <h1>Segunda entrega — checklist por materia</h1>
+  <p class="sub">Todas las tareas del punteo de la segunda entrega, agrupadas por asignatura. Tildá lo que ya está listo — se guarda en el servidor Node.js.</p>
+</header>
+
+<div class="overall">
+  <div class="ring">
+    <svg viewBox="0 0 74 74">
+      <circle class="track" cx="37" cy="37" r="31"></circle>
+      <circle class="fill" id="ringFill" cx="37" cy="37" r="31" stroke-dasharray="194.8" stroke-dashoffset="194.8"></circle>
+    </svg>
+    <div class="num mono" id="ringNum">0%</div>
+  </div>
+  <div class="overall-text">
+    <div class="label">Avance general de la segunda entrega</div>
+    <div class="count mono" id="overallCount">0 / 0 tareas</div>
+  </div>
+  <button class="reset-btn" id="resetBtn">Reiniciar todo</button>
+</div>
+
+<main id="main"></main>
+
+<footer>Proyecto de Egreso 2026 — I.S.B.O. / Polo MVD / ITS Paysandú / Villa Muñoz</footer>
+
+<script>
+const DATA = [
+  {
+    id: "ing-software",
+    name: "Ingeniería del Software",
+    color: "#3fb8a6",
+    groups: [
+      { title: null, tasks: [
+        "Diagrama de Gantt actualizado para la segunda entrega",
+        "Diagrama UML de Casos de Uso (planilla + diagrama)",
+        "Diagrama de Clases",
+        "Plan de contingencias",
+        "Análisis Costo-Beneficio",
+        "Cálculo de métricas del proyecto",
+        "Actas de reuniones",
+        "Demostración al cliente (video de no más de 2 min mostrando el avance)",
+        "Subir TODO el proyecto al repositorio con las correcciones de la primera entrega"
+      ]}
+    ]
+  },
+  {
+    id: "fullstack",
+    name: "Programación Full Stack",
+    color: "#f2b441",
+    note: "Primera versión funcional del sistema. Se trabaja sobre el Módulo Documentación con backend PHP y base de datos. El Módulo Ambulancias es opcional.",
+    groups: [
+      { title: "1. Base de datos", tasks: [
+        "Corregir el DER y el esquema relacional según la devolución de la primera entrega, documentando los cambios",
+        "Crear la base de datos en MySQL con scripts DDL completos (CREATE TABLE con PK, FK y restricciones)",
+        "Ejecutar en phpMyAdmin y adjuntar evidencia (capturas de pantalla)",
+        "Insertar datos de prueba mediante sentencias DML (INSERT)",
+        "Documentar las restricciones no estructurales implementadas en la base de datos"
+      ]},
+      { title: "2. Autenticación y gestión de sesiones", tasks: [
+        "Implementar login con formulario HTML y validación en PHP",
+        "Gestionar sesiones con session_start() y $_SESSION",
+        "Implementar logout que destruya la sesión correctamente",
+        "Diferenciar al menos dos roles: administrador y usuario básico (paciente)",
+        "Rutas protegidas redirigen al login si no hay sesión activa"
+      ]},
+      { title: "3. Módulo Documentación — CRUD funcional", tasks: [
+        "Alta de documentos: formulario con validación PHP y almacenamiento en la base de datos",
+        "Listado de documentos: consulta SELECT y presentación en tabla HTML",
+        "Edición de documentos: formulario prellenado y UPDATE",
+        "Eliminación de documentos: baja lógica o física con confirmación",
+        "Validación de formularios en el backend con mensajes de error claros",
+        "La vista accesible por QR muestra correctamente los datos del documento"
+      ]},
+      { title: "4. Arquitectura y código", tasks: [
+        "Proyecto organizado en tres capas (presentación / negocio / datos) visible en la estructura de carpetas",
+        "Al menos dos clases PHP con atributos y métodos del dominio del sistema",
+        "Código comentado en las secciones principales"
+      ]},
+      { title: "5. Control de versiones", tasks: [
+        "Repositorio de GitHub actualizado con el código completo de esta entrega",
+        "Commits frecuentes con mensajes descriptivos",
+        "README.md actualizado con instrucciones de instalación y estado de la entrega"
+      ]},
+      { title: "6. Módulo Ambulancias (opcional — logro adicional)", optional: true, tasks: [
+        "Alta de traslado: formulario con conductor, enfermero, origen y destino",
+        "Listado de traslados con estado actual",
+        "Edición y seguimiento de estado del traslado",
+        "Datos del paciente ingresados manualmente"
+      ]}
+    ]
+  },
+  {
+    id: "sistemas-operativos",
+    name: "Admin. de Sistemas Operativos",
+    color: "#8f7ee0",
+    groups: [
+      { title: null, tasks: [
+        "Primera versión del script de operador: gestión de usuarios",
+        "Primera versión del script de operador: gestión de grupos",
+        "Primera versión del script de operador: gestión de respaldos",
+        "Primera versión del script de operador: gestión de redes",
+        "Primera versión del script de operador: gestión de bases de datos",
+        "Primera versión del script de operador: gestión de firewall",
+        "Primera versión del script de operador: gestión de logs del sistema",
+        "Primera versión del script de operador: gestión de Docker",
+        "Configuración y documentación del servicio SSH con buenas prácticas de seguridad",
+        "Configuración de usuarios y grupos, justificando los niveles de permisos otorgados",
+        "Relevamiento de un esquema seguro para la configuración de red",
+        "Establecer medios de respaldo a largo plazo y alta disponibilidad de datos",
+        "Diseñar e implementar mecanismos de backup para los datos de la aplicación",
+        "Establecer mecanismos y umbrales de alerta y monitoreo del sistema",
+        "Investigar cómo visualizar de forma eficiente los logs de la aplicación",
+        "Archivo Docker Compose para modelar el despliegue final (no requiere estar finalizado)"
+      ]}
+    ]
+  },
+  {
+    id: "utulab",
+    name: "Tutoría de Proyecto UTULAB",
+    color: "#e2735a",
+    groups: [
+      { title: "Carpeta parcial", tasks: [
+        "Marco teórico",
+        "Planificación y cronograma actualizado",
+        "Desarrollo del proyecto (avance técnico y organizativo)",
+        "Resultados esperados",
+        "Conclusiones",
+        "Anexos"
+      ]},
+      { title: "Desarrollo técnico", tasks: [
+        "Merchandising de la empresa (impresión 3D)",
+        "Publicidad de la empresa (flyers, etc.)",
+        "Posibles enlaces, QR o capturas de funcionalidades ya desarrolladas",
+        "GitHub: organización del repositorio (primeros pasos)"
+      ]}
+    ]
+  },
+  {
+    id: "emprendedurismo",
+    name: "Emprendedurismo y Gestión",
+    color: "#5aa9e2",
+    note: "El contenido de la segunda entrega para esta materia está en el documento entregado por los docentes (no viene desglosado en la letra del proyecto). Revisar el enlace del punto 8.5 del documento original.",
+    groups: []
+  },
+  {
+    id: "sociologia",
+    name: "Sociología",
+    color: "#c95ad0",
+    groups: [
+      { title: null, tasks: [
+        "Corrección de las entregas anteriores",
+        "Elección y aplicación de la metodología de investigación (técnica de recolección: encuesta y/o entrevista)",
+        "Para encuestas: definir a quiénes se encuestará y qué se busca averiguar",
+        "Para entrevistas: explicar el criterio de elección de los informantes",
+        "Análisis de los resultados obtenidos con las herramientas metodológicas aplicadas",
+        "Identificación de limitaciones del proyecto (bibliografía, recursos, organización, tiempos, etc.)"
+      ]}
+    ]
+  },
+  {
+    id: "ingles",
+    name: "Inglés — Company Reel",
+    color: "#4cc98a",
+    note: "Segunda entrega: video institucional (Company Reel) de 2 a 3 minutos, en inglés, formato MP4, entregado por CREA.",
+    groups: [
+      { title: "Contenido del video", tasks: [
+        "Presentación de la empresa: nombre, integrantes y roles",
+        "Descripción del proyecto: nombre, tipo, objetivo, público objetivo y elementos diferenciales",
+        "Organización del equipo (workflow): herramientas, tiempos, tipo de reuniones",
+        "Análisis FODA (SWOT): fortalezas, debilidades, oportunidades, amenazas",
+        "Planificación a futuro: estrategias de mejora y próximos pasos"
+      ]},
+      { title: "Requisitos técnicos", tasks: [
+        "Duración de 2 a 3 minutos",
+        "Formato MP4",
+        "Íntegramente en inglés",
+        "Entrega en plataforma CREA según fecha indicada"
+      ]}
+    ]
+  }
+];
+
+let state = {};
+
+async function loadState() {
+  try {
+    const res = await fetch('/api/datos');
+    state = await res.json();
+  } catch(e) {
+    console.error("Error al cargar:", e);
+    state = {};
+  }
+  render();
+  const first = document.querySelector(".subject");
+  if(first){
+    first.classList.add("open");
+    first.querySelector(".subject-body").style.maxHeight = first.querySelector(".subject-body").scrollHeight + "px";
+  }
+}
+
+async function saveState(state) {
+  try {
+    await fetch('/api/datos', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(state)
+    });
+  } catch(e) {
+    console.error("Error al guardar:", e);
+  }
+}
+
+function taskKey(subjectId, groupIdx, taskIdx){
+  return subjectId + "::" + groupIdx + "::" + taskIdx;
+}
+
+function render(){
+  const main = document.getElementById("main");
+  main.innerHTML = "";
+
+  DATA.forEach(subject => {
+    const card = document.createElement("div");
+    card.className = "subject";
+    card.dataset.open = "false";
+
+    const head = document.createElement("div");
+    head.className = "subject-head";
+
+    const swatch = document.createElement("div");
+    swatch.className = "swatch";
+    swatch.style.background = subject.color;
+
+    const titleWrap = document.createElement("div");
+    titleWrap.className = "subject-title";
+    const h2 = document.createElement("h2");
+    h2.textContent = subject.name;
+    const meta = document.createElement("div");
+    meta.className = "meta";
+    titleWrap.appendChild(h2);
+    titleWrap.appendChild(meta);
+
+    const barWrap = document.createElement("div");
+    barWrap.className = "bar-wrap";
+    const barFill = document.createElement("div");
+    barFill.className = "bar-fill";
+    barFill.style.background = subject.color;
+    barWrap.appendChild(barFill);
+
+    const chevron = document.createElement("div");
+    chevron.className = "chevron";
+    chevron.innerHTML = '<svg viewBox="0 0 20 20" fill="none"><path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+
+    head.appendChild(swatch);
+    head.appendChild(titleWrap);
+    head.appendChild(barWrap);
+    head.appendChild(chevron);
+
+    const body = document.createElement("div");
+    body.className = "subject-body";
+
+    if(subject.note){
+      const noteWrap = document.createElement("div");
+      noteWrap.style.padding = "14px 18px 0";
+      const note = document.createElement("div");
+      note.className = "note";
+      note.textContent = subject.note;
+      noteWrap.appendChild(note);
+      body.appendChild(noteWrap);
+    }
+
+    subject.groups.forEach((group, gIdx) => {
+      const groupEl = document.createElement("div");
+      groupEl.className = "group";
+
+      if(group.title){
+        const gt = document.createElement("div");
+        gt.className = "group-title";
+        gt.textContent = group.title;
+        groupEl.appendChild(gt);
+      }
+
+      group.tasks.forEach((text, tIdx) => {
+        const key = taskKey(subject.id, gIdx, tIdx);
+        const checked = !!state[key];
+
+        const row = document.createElement("div");
+        row.className = "task" + (checked ? " done" : "") + (group.optional ? " optional" : "");
+
+        const cb = document.createElement("input");
+        cb.type = "checkbox";
+        cb.id = key;
+        cb.checked = checked;
+
+        const label = document.createElement("label");
+        label.htmlFor = key;
+        label.textContent = text;
+
+        row.appendChild(cb);
+        row.appendChild(label);
+        row.addEventListener("click", (e) => {
+          if(e.target.tagName.toLowerCase() === "input"){ return; }
+          cb.checked = !cb.checked;
+          cb.dispatchEvent(new Event("change"));
+        });
+
+        cb.addEventListener("change", () => {
+          state[key] = cb.checked;
+          saveState(state);
+          row.classList.toggle("done", cb.checked);
+          updateSubjectProgress(subject, barFill, meta);
+          updateOverall();
+        });
+
+        groupEl.appendChild(row);
+      });
+
+      body.appendChild(groupEl);
+    });
+
+    card.appendChild(head);
+    card.appendChild(body);
+    main.appendChild(card);
+
+    head.addEventListener("click", () => {
+      const isOpen = card.classList.toggle("open");
+      body.style.maxHeight = isOpen ? body.scrollHeight + "px" : "0px";
+    });
+
+    updateSubjectProgress(subject, barFill, meta);
+  });
+
+  updateOverall();
+}
+
+function subjectTotals(subject){
+  let total = 0, done = 0;
+  subject.groups.forEach((group, gIdx) => {
+    group.tasks.forEach((_, tIdx) => {
+      total++;
+      if(state[taskKey(subject.id, gIdx, tIdx)]) done++;
+    });
+  });
+  return { total, done };
+}
+
+function updateSubjectProgress(subject, barFill, meta){
+  const { total, done } = subjectTotals(subject);
+  const pct = total === 0 ? 0 : Math.round((done/total)*100);
+  barFill.style.width = pct + "%";
+  meta.textContent = total === 0 ? "sin tareas listadas aquí" : `${done} / ${total} · ${pct}%`;
+}
+
+function updateOverall(){
+  let total = 0, done = 0;
+  DATA.forEach(subject => {
+    const t = subjectTotals(subject);
+    total += t.total;
+    done += t.done;
+  });
+  const pct = total === 0 ? 0 : Math.round((done/total)*100);
+  document.getElementById("overallCount").textContent = `${done} / ${total} tareas`;
+  document.getElementById("ringNum").textContent = pct + "%";
+
+  const circumference = 194.8;
+  const offset = circumference - (pct/100)*circumference;
+  document.getElementById("ringFill").style.strokeDashoffset = offset;
+}
+
+// Botón de reiniciar ahora actualiza el servidor Node.js
+document.getElementById("resetBtn").addEventListener("click", async () => {
+  if(confirm("¿Estás seguro bo? Se borra todo de la base de datos.")){
+    state = {};
+    await saveState(state);
+    render();
+    document.querySelectorAll(".subject").forEach(s => {
+      s.classList.remove("open");
+      s.querySelector(".subject-body").style.maxHeight = "0px";
+    });
+  }
+});
+
+// Iniciamos la carga
+loadState();
+</script>
+</body>
+</html>
