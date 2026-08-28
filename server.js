@@ -1,34 +1,22 @@
 const express = require('express');
-const fs = require('fs');
-const path = require('path');
+const path = path = require('path'); // Corregido
 
 const app = express();
-// Usamos el puerto que te asigna Render automáticamente, o el 3000 si estás en tu compu
 const puerto = process.env.PORT || 3000;
-const archivoDatos = path.join(__dirname, 'datos.json');
+
+// Memoria RAM temporal para que no dependa del disco de Render
+let datosMemoria = {};
 
 app.use(express.json());
 app.use(express.static('public'));
 
 app.get('/api/datos', (req, res) => {
-    try {
-        if (!fs.existsSync(archivoDatos)) {
-            fs.writeFileSync(archivoDatos, JSON.stringify({}));
-        }
-        const datos = fs.readFileSync(archivoDatos, 'utf-8');
-        res.json(JSON.parse(datos));
-    } catch (error) {
-        res.status(500).json({ error: "Error al leer los datos" });
-    }
+    res.json(datosMemoria);
 });
 
 app.post('/api/datos', (req, res) => {
-    try {
-        fs.writeFileSync(archivoDatos, JSON.stringify(req.body, null, 2));
-        res.json({ mensaje: "Guardado impecable" });
-    } catch (error) {
-        res.status(500).json({ error: "Error al guardar los datos" });
-    }
+    datosMemoria = req.body;
+    res.json({ mensaje: "Guardado impecable en memoria" });
 });
 
 app.listen(puerto, () => {
