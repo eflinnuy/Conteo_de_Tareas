@@ -21,4 +21,4 @@ app.post('/api/datos', (req, res) => {
 
 app.listen(puerto, () => {
     console.log(`Servidor de S.I.G.S.M. corriendo en el puerto ${puerto}`);
-});
+}); 
